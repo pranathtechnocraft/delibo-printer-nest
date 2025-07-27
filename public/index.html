@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Delibo Printer Connecter</title>
+
+    <!-- Google Font -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- CSS Styling -->
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Inter', sans-serif;
+      }
+
+      body {
+        background: linear-gradient(135deg, #6a11cb, #2575fc);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .login-container {
+        background-color: #ffffff;
+        padding: 2.5rem;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        max-width: 400px;
+        width: 100%;
+        text-align: center;
+      }
+
+      h2 {
+        margin-bottom: 1.5rem;
+        font-size: 24px;
+        color: #333;
+      }
+
+      input[type='text'],
+      input[type='password'] {
+        width: 100%;
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: border-color 0.3s;
+      }
+
+      input:focus {
+        border-color: #2575fc;
+        outline: none;
+      }
+
+      button {
+        width: 100%;
+        padding: 0.75rem;
+        font-size: 16px;
+        background-color: #2575fc;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+
+      button:hover {
+        background-color: #1b5fdd;
+      }
+
+      .footer {
+        margin-top: 1rem;
+        font-size: 14px;
+        color: #888;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-container">
+      <h2>Login to Printer Dashboard</h2>
+      <input type="text" id="username" placeholder="Username" />
+      <input type="password" id="password" placeholder="Password" />
+      <button onclick="login()">Login & Connect</button>
+      <div class="footer">Delibo Safe Login</div>
+    </div>
+    <script>
+      // If already logged in, redirect to dashboard
+      if (localStorage.getItem('isLoggedIn') === 'true') {
+        window.location.href = 'http://localhost:3000/dashboard';
+      }
+
+      async function login() {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const button = document.querySelector('button');
+
+        button.disabled = true;
+        const originalText = button.textContent;
+        button.textContent = 'Verifying...';
+
+        try {
+          const response = await fetch('http://localhost:3000/iot/subscribe', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ username, password, topic: 'hello/maddy' }),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Server error: ${errorText}`);
+          }
+
+          const data = await response.json();
+          console.log('DATA : ', data);
+
+          // ✅ Save login flag
+          localStorage.setItem('isLoggedIn', 'true');
+          localStorage.setItem('ServerID', data.ServerID);
+
+          // ✅ Redirect on success
+          window.location.href = 'http://localhost:3000/dashboard';
+        } catch (error) {
+          console.error('❌ ERROR FRONTEND:', error);
+          alert('Login failed: ' + error.message);
+          button.disabled = false;
+          button.textContent = originalText;
+        }
+      }
+    </script>
+  </body>
+</html>

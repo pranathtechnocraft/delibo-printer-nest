@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard - IoT Connected</title>
+
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Inter', sans-serif;
+      }
+
+      body {
+        background: #f5f7fa;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .dashboard-container {
+        background-color: #ffffff;
+        padding: 2rem 2.5rem;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        max-width: 500px;
+        width: 100%;
+      }
+
+      h1 {
+        font-size: 26px;
+        margin-bottom: 1rem;
+        color: #333;
+      }
+
+      .status-badge {
+        display: inline-block;
+        background-color: #e6f4ea;
+        color: #2e7d32;
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+      }
+
+      .info-text {
+        font-size: 16px;
+        color: #666;
+        margin-bottom: 2rem;
+      }
+
+      button {
+        padding: 0.75rem 1.5rem;
+        font-size: 16px;
+        background-color: #2575fc;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      button:hover {
+        background-color: #1b5fdd;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="dashboard-container">
+      <h1>WELCOME TO DELIBO PRINTER</h1>
+      <div class="status-badge">🟢 Printer Connected</div>
+      <!-- <p class="info-text">
+        Your device is successfully authenticated and connected to the AWS IoT
+        Core network.
+      </p> -->
+      <div>
+        <button onclick="logout()">Logout</button>
+      </div>
+    </div>
+
+    <script>
+      // Redirect if not logged in
+      if (localStorage.getItem('isLoggedIn') !== 'true') {
+        window.location.href = '/';
+      }
+      window.addEventListener('load', async () => {
+        const storedServerId = localStorage.getItem('ServerID');
+        if (!storedServerId) {
+          alert('No server ID found in localStorage. Redirecting...');
+          window.location.href = '/';
+          return;
+        }
+
+        try {
+          const res = await fetch('http://localhost:3000/system/server-id');
+          if (!res.ok) {
+            throw new Error('Failed to fetch server ID');
+          }
+
+          const { serverId: backendServerId } = await res.json();
+
+          if (storedServerId !== backendServerId) {
+            // alert('Server ID mismatch! Logging out...');
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('ServerID');
+            window.location.href = '/';
+          }
+        } catch (error) {
+          console.error('Error validating server ID:', error);
+          alert('Unable to verify server ID. Try again later.');
+          window.location.href = '/';
+        }
+      });
+
+      function logout() {
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('ServerID');
+        window.location.href = '/';
+      }
+    </script>
+  </body>
+</html>
