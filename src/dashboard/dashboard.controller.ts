@@ -6,7 +6,8 @@ import { join } from 'path';
 export class DashBoardController {
   @Get()
   getIndex(@Res() res: Response) {
-    const filePath = join(process.cwd(), 'public', 'dashboard.html');
+    const filePath = join(__dirname, '..', '..', 'public', 'dashboard.html');
+    // const filePath = join(process.cwd(), 'public', 'dashboard.html');
     console.log('Sending file:', filePath);
     res.sendFile(filePath);
   }

@@ -3,7 +3,7 @@ import * as PDFDocument from 'pdfkit';
 import * as QRCode from 'qrcode';
 import * as fs from 'fs';
 import * as path from 'path';
-// import * as printer from 'pdf-to-printer';
+import * as printer from 'pdf-to-printer';
 
 @Injectable()
 export class InvoiceService {
@@ -158,6 +158,6 @@ export class InvoiceService {
     } catch (error) {
       console.log('Error', error);
     }
-    // await printer.print(kotPath);
+    await printer.print(kotPath);
   }
 }

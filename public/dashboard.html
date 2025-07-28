@@ -3,100 +3,111 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard - IoT Connected</title>
-
-    <!-- Google Fonts -->
+    <title>IoT Printer Dashboard</title>
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
       rel="stylesheet"
     />
-
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <style>
-      * {
+      body {
         margin: 0;
         padding: 0;
-        box-sizing: border-box;
+        background: #f5f5f5;
         font-family: 'Inter', sans-serif;
-      }
-
-      body {
-        background: #f5f7fa;
-        min-height: 100vh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-
-      .dashboard-container {
-        background-color: #ffffff;
-        padding: 2rem 2.5rem;
-        border-radius: 16px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        text-align: center;
-        max-width: 500px;
-        width: 100%;
-      }
-
-      h1 {
-        font-size: 26px;
-        margin-bottom: 1rem;
         color: #333;
       }
 
-      .status-badge {
-        display: inline-block;
-        background-color: #e6f4ea;
-        color: #2e7d32;
-        padding: 0.5rem 1rem;
-        border-radius: 25px;
-        font-weight: 600;
-        margin-bottom: 1.5rem;
+      .container {
+        max-width: 400px;
+        margin: 50px auto;
+        background: #fff;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        text-align: center;
       }
 
-      .info-text {
-        font-size: 16px;
-        color: #666;
-        margin-bottom: 2rem;
+      h2 {
+        margin-bottom: 1rem;
       }
 
-      button {
-        padding: 0.75rem 1.5rem;
-        font-size: 16px;
-        background-color: #2575fc;
-        color: white;
+      .logout-button {
+        margin-top: 20px;
+        padding: 10px 20px;
+        background-color: #e74c3c;
+        color: #fff;
         border: none;
-        border-radius: 8px;
+        border-radius: 6px;
+        font-weight: bold;
         cursor: pointer;
-        transition: background-color 0.3s ease;
       }
 
-      button:hover {
-        background-color: #1b5fdd;
+      .logout-button:hover {
+        background-color: #c0392b;
+      }
+
+      .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+      }
+
+      .toast {
+        background: #323232;
+        color: #fff;
+        padding: 16px;
+        margin-top: 10px;
+        border-radius: 8px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        opacity: 1 !important;
+        animation: none !important;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes fadeOut {
+        to {
+          opacity: 0;
+          transform: translateY(-20px);
+        }
       }
     </style>
   </head>
   <body>
-    <div class="dashboard-container">
-      <h1>WELCOME TO DELIBO PRINTER</h1>
-      <div class="status-badge">🟢 Printer Connected</div>
-      <!-- <p class="info-text">
-        Your device is successfully authenticated and connected to the AWS IoT
-        Core network.
-      </p> -->
-      <div>
-        <button onclick="logout()">Logout</button>
-      </div>
+    <div class="container">
+      <h2>Printer Dashboard</h2>
+      <p>Real-time connection active.</p>
+      <button class="logout-button" onclick="logout()">Logout</button>
     </div>
 
+    <div class="toast-container" id="toastContainer"></div>
+    <!-- <button onclick="enableAudio()">Enable Notifications</button> -->
+    <audio
+      id="notifSound"
+      src="sounds/notify.mp3"
+      preload="auto"
+      muted
+      autoplay
+    ></audio>
+
     <script>
-      // Redirect if not logged in
-      if (localStorage.getItem('isLoggedIn') !== 'true') {
-        window.location.href = '/';
-      }
-      window.addEventListener('load', async () => {
-        const storedServerId = localStorage.getItem('ServerID');
-        if (!storedServerId) {
-          alert('No server ID found in localStorage. Redirecting...');
+      const BASE_URL = window.location.origin;
+      let socket = null;
+
+      window.onload = async () => {
+        const frontEndServerID = localStorage.getItem('ServerID');
+        if (!frontEndServerID) {
           window.location.href = '/';
           return;
         }
@@ -109,23 +120,133 @@
 
           const { serverId: backendServerId } = await res.json();
 
-          if (storedServerId !== backendServerId) {
+          console.log('backendServerId : ', backendServerId);
+
+          if (frontEndServerID !== backendServerId) {
             // alert('Server ID mismatch! Logging out...');
             localStorage.removeItem('isLoggedIn');
             localStorage.removeItem('ServerID');
             window.location.href = '/';
           }
+          connectSocket(frontEndServerID);
         } catch (error) {
           console.error('Error validating server ID:', error);
           alert('Unable to verify server ID. Try again later.');
           window.location.href = '/';
         }
-      });
+      };
 
-      function logout() {
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('ServerID');
-        window.location.href = '/';
+      function connectSocket(frontEndServerID) {
+        socket = io(BASE_URL, {
+          path: '/websocket/connect',
+          transports: ['websocket'],
+          reconnectionAttempts: 5,
+        });
+
+        socket.on('connect', () => {
+          console.log('WebSocket connected');
+        });
+
+        socket.on('notification', (data) => {
+          console.log('notification : ', data);
+
+          if (data?.serverId === frontEndServerID) {
+            playSound();
+            showToast(
+              data.title || 'Alert',
+              data.message || 'You have a notification',
+            );
+          }
+        });
+
+        socket.on('disconnect', () => {
+          console.warn('WebSocket disconnected');
+        });
+
+        socket.on('connect_error', (err) => {
+          console.error('WebSocket error:', err.message);
+        });
+      }
+
+      function createMinimalNotification(order) {
+        const { items, total, orderNo, createdAt } = order;
+
+        const title = 'New Order Received!';
+        let message = '';
+
+        if (items.length === 1) {
+          const item = items[0];
+          message = `${item.prdtName} ×${item.qnty} — ₹${item.price}`;
+        } else {
+          const totalItems = items.reduce((sum, item) => sum + item.qnty, 0);
+          message = `${totalItems} items — ₹${total}`;
+        }
+
+        return {
+          title,
+          message,
+          total: `Total: ₹${total}`,
+          orderNo: `Order #${orderNo}`,
+          time: new Date(createdAt).toLocaleString('en-IN', {
+            hour12: true,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+        };
+      }
+
+      function showToast(title, message) {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.classList.add('toast');
+        const minimalNotification = createMinimalNotification(
+          JSON.parse(message),
+        );
+
+        toast.innerHTML = `
+        <div>🔔 ${minimalNotification.title}</div></br>
+        <div>Order No: ${minimalNotification.orderNo}</div></br>
+        <div>Items: ${minimalNotification.message}</div></br>
+        <div>Total: ${minimalNotification.total}</div></br>
+        <div>Time: ${minimalNotification.time}</div></br>
+        `;
+
+        console.log('toast : ', toast);
+
+        container.appendChild(toast);
+
+        // Remove toast after 4 seconds
+        setTimeout(() => {
+          toast.remove();
+        }, 10000); // Enough for fadeOut to complete
+      }
+
+      function playSound() {
+        const audio = document.getElementById('notifSound');
+        audio.muted = false;
+        audio.currentTime = 0;
+        audio.play().catch((err) => console.error('Audio play error:', err));
+      }
+
+      async function logout() {
+        try {
+          const res = await fetch('http://localhost:3000/iot/disconnect', {
+            method: 'POST',
+          });
+          if (!res.ok) {
+            throw new Error('Failed to disconnect the websocket');
+          }
+
+          localStorage.clear();
+          if (socket) socket.disconnect();
+
+          window.location.href = '/';
+        } catch (error) {
+          alert(error);
+        }
       }
     </script>
   </body>

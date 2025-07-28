@@ -6,7 +6,9 @@ import { join } from 'path';
 export class AuthController {
   @Get()
   getIndex(@Res() res: Response) {
-    const filePath = join(process.cwd(), 'public', 'index.html');
+    const filePath = join(__dirname, '..', '..', 'public', 'index.html');
+
+    // const filePath = join(process.cwd(), 'public', 'index.html');
     console.log('Sending file:', filePath);
     res.sendFile(filePath);
   }

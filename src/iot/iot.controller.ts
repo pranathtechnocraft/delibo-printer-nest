@@ -11,4 +11,8 @@ export class IOTController {
     return this.iotService.connectToIoT(body);
   }
 
+  @Post('disconnect')
+  disconnectToIot(): string {
+    return this.iotService.disconnectIOT();
+  }
 }

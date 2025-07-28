@@ -14,6 +14,7 @@ import { AWSDETAILS } from 'src/types/aws.details';
 
 import { InvoiceService } from 'src/invoice/invoice.service';
 import { ServerIDService } from 'src/serverId/server-id.service';
+import { NotificationsService } from 'src/notification/notifications.service';
 
 @Injectable()
 export class IOTService {
@@ -23,6 +24,7 @@ export class IOTService {
   constructor(
     private readonly invoiceService: InvoiceService,
     private readonly ServerID: ServerIDService,
+    private readonly notificationService: NotificationsService,
   ) {}
 
   private async loginAndGetToken(body: {
@@ -158,12 +160,17 @@ export class IOTService {
       });
 
       this.client.on('message', (topic, message) => {
-        console.log('📩 Topic:', topic);
+        console.log('📩 Topic:', message);
 
         void (async () => {
           try {
             const orderData = JSON.parse(message.toString());
-            await this.invoiceService.printInvoice(orderData);
+
+            await this.invoiceService.printInvoice(orderData.data);
+
+            this.notificationService.sendNewNotification({
+              message: JSON.stringify(orderData.data),
+            });
           } catch (err) {
             console.error(
               '❌ Error processing message or printing invoice:',
@@ -179,7 +186,7 @@ export class IOTService {
       throw error;
     }
 
-    return {ServerID: this.ServerID.getUUID()};
+    return { ServerID: this.ServerID.getUUID() };
   }
 
   disconnectIOT(): string {

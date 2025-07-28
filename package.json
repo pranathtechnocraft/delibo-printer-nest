@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "bin": {
-    "my-iot-app": "dist/main.js"
+    "connect-printer": "dist/main.js"
   },
   "scripts": {
     "build": "nest build",
@@ -29,6 +29,8 @@
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/platform-socket.io": "^11.1.5",
+    "@nestjs/websockets": "^11.1.5",
     "amazon-cognito-identity-js": "^6.3.15",
     "aws-sdk": "^2.1692.0",
     "mqtt": "^5.13.3",
@@ -85,14 +87,8 @@
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
   },
-  "pkg": {
-    "scripts": "dist/**/*.js",
-    "assets": [
-      "public/**/*"
-    ],
-    "targets": [
-      "node18-win-x64"
-    ],
-    "outputPath": "build"
-  }
+  "files": [
+    "dist",
+    "public"
+  ]
 }
