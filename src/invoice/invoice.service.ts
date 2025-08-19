@@ -4,16 +4,12 @@ import * as QRCode from 'qrcode';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as printer from 'pdf-to-printer';
-
+import { InvoiceNamespace } from 'src/namespaces/invoiceNamespace';
 @Injectable()
 export class InvoiceService {
-  private async generateQRCode(data: {
-    shopName: string;
-    sellingLocationId: string;
-    category: string;
-    orderNo: string;
-    account_id: string;
-  }): Promise<string> {
+  private async generateQRCode(
+    data: InvoiceNamespace.generateQRCode,
+  ): Promise<string> {
     const qrContent = `orderId: ${data.orderNo}/sellingLocationId: ${data?.sellingLocationId}/category:${data?.category || 'NA'}/sellerAccId:${data?.account_id}`;
     const qrCodeDataUrl: string = await QRCode.toDataURL(qrContent, {
       width: 100,
@@ -24,30 +20,7 @@ export class InvoiceService {
   }
 
   private async generateInvoice(
-    order: {
-      shopName: string;
-      gstin: string;
-      DeliboAddress: string;
-      fssai: number;
-      branch: string;
-      type: string;
-      orderNo: string;
-      createdAt: string;
-      items: {
-        prdtName: string;
-        qnty: number;
-        price: number;
-        // add any more item-specific fields if needed
-      }[];
-      totalQuantity: number;
-      subTotal: number;
-      gstTotal: number;
-      total: number;
-      deliverType: string;
-      sellingLocationId: string;
-      category: string;
-      account_id: string;
-    },
+    order: InvoiceNamespace.invoiceData,
     filePath: string,
   ): Promise<unknown> {
     console.log('ORDER :::::: ', order);
@@ -127,30 +100,7 @@ export class InvoiceService {
     });
   }
 
-  async printInvoice(order: {
-    shopName: string;
-    gstin: string;
-    DeliboAddress: string;
-    fssai: number;
-    branch: string;
-    type: string;
-    orderNo: string;
-    createdAt: string;
-    items: {
-      prdtName: string;
-      qnty: number;
-      price: number;
-      // add any more item-specific fields if needed
-    }[];
-    totalQuantity: number;
-    subTotal: number;
-    gstTotal: number;
-    total: number;
-    deliverType: string;
-    sellingLocationId: string;
-    category: string;
-    account_id: string;
-  }): Promise<void> {
+  async printInvoice(order: InvoiceNamespace.invoiceData): Promise<void> {
     const kotPath = path.join(__dirname, '../../kot_invoice.pdf');
     try {
       await this.generateInvoice(order, kotPath);

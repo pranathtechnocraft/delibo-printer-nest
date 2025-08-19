@@ -11,7 +11,7 @@ import {
   AuthenticationDetails,
 } from 'amazon-cognito-identity-js';
 import { AWSDETAILS } from 'src/types/aws.details';
-
+import { InvoiceNamespace } from 'src/namespaces/invoiceNamespace';
 import { InvoiceService } from 'src/invoice/invoice.service';
 import { ServerIDService } from 'src/serverId/server-id.service';
 import { NotificationsService } from 'src/notification/notifications.service';
@@ -159,29 +159,45 @@ export class IOTService {
         });
       });
 
-      this.client.on('message', (topic, message) => {
-        console.log('📩 Topic:', message);
+      this.client.on('message', (topic: string, message: Buffer) => {
+        console.log('📩 message:', message.toString());
+        const rawMessage = message.toString();
+        let parsed: unknown;
 
         void (async () => {
-          try {
-            const orderData = JSON.parse(message.toString());
-
-            await this.invoiceService.printInvoice(orderData.data);
-
-            this.notificationService.sendNewNotification({
-              message: JSON.stringify(orderData.data),
-            });
-          } catch (err) {
-            console.error(
-              '❌ Error processing message or printing invoice:',
-              err,
+          function hasDataProperty(
+            obj: unknown,
+          ): obj is { data: InvoiceNamespace.invoiceData } {
+            return (
+              typeof obj === 'object' &&
+              obj !== null &&
+              'data' in obj &&
+              typeof (
+                obj as {
+                  data: InvoiceNamespace.invoiceData;
+                }
+              ).data === 'object'
             );
+          }
+
+          try {
+            parsed = JSON.parse(rawMessage);
+            if (hasDataProperty(parsed)) {
+              await this.invoiceService.printInvoice(parsed.data);
+            }
+          } catch (error) {
+            console.log('Error : ', error);
           }
         })();
       });
-    } catch (error) {
-      if (error.code === 'ParameterNotFound') {
-        throw new NotFoundException(`SSM Parameter not found`);
+    } catch (error: unknown) {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        (error as { code?: string }).code === 'ParameterNotFound'
+      ) {
+        throw new NotFoundException('SSM Parameter not found');
       }
       throw error;
     }
