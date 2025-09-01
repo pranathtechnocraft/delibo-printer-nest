@@ -26,8 +26,8 @@ export class InvoiceService {
     console.log('ORDER :::::: ', order);
     console.log('filePath :::::: ', filePath);
     const doc = new PDFDocument({
-      size: [220, 600],
-      margin: 10,
+      size: [255, 600],
+      margin: 7,
     });
     const stream = fs.createWriteStream(filePath);
     doc.pipe(stream);
@@ -35,7 +35,7 @@ export class InvoiceService {
     const centerText = (text: string, size = 10, font = 'Courier') => {
       doc.font(font).fontSize(size).text(text, { align: 'center' });
     };
-    const line = () => centerText('--------------------------------');
+    const line = () => centerText('----------------------------------------');
     const currency = (val: number) => {
       if (isNaN(val)) return 'Rs 0.00';
       return `Rs ${val.toFixed(2)}`;
@@ -55,7 +55,7 @@ export class InvoiceService {
     line();
 
     // Item Header
-    doc.font('Courier-Bold').text('Item          Qty  Rate   Amt');
+    doc.font('Courier-Bold').text('Item           Qty    Rate    Amt');
     line();
 
     // Items
@@ -67,15 +67,15 @@ export class InvoiceService {
       const qty = item.qnty.toString().padStart(3, ' ');
       const rate = item.price.toFixed(2).padStart(6, ' ');
       const amt = (item.qnty * item.price).toFixed(2).padStart(6, ' ');
-      doc.font('Courier').text(`${name}${qty}${rate}${amt}`);
+      doc.font('Courier').text(`${name} ${qty}   ${rate}   ${amt}`);
     });
 
     line();
 
     // Totals
-    doc.font('Courier-Bold').text(`Total Qty: ${order.totalQuantity}`);
-    doc.font('Courier').text(`Subtotal: ${currency(order.subTotal)}`);
-    doc.text(`GST: ${currency(order.gstTotal)}`);
+    doc.font('Courier-Bold').text(`Total Qty:      ${order.totalQuantity}`);
+    doc.font('Courier').text(`Subtotal:   ${currency(order.subTotal)}`);
+    doc.text(`GST:   ${currency(order.gstTotal)}`);
     doc.font('Courier-Bold').text(`Total: ${currency(order.total)}`);
 
     // QR Code

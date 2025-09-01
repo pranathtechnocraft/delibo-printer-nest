@@ -113,7 +113,7 @@
         }
 
         try {
-          const res = await fetch('http://localhost:3000/system/server-id');
+          const res = await fetch('http://localhost:8184/system/server-id');
           if (!res.ok) {
             throw new Error('Failed to fetch server ID');
           }
@@ -233,7 +233,7 @@
 
       async function logout() {
         try {
-          const res = await fetch('http://localhost:3000/iot/disconnect', {
+          const res = await fetch('http://localhost:8184/iot/disconnect', {
             method: 'POST',
           });
           if (!res.ok) {

@@ -107,7 +107,7 @@
         button.textContent = 'Verifying...';
 
         try {
-          const response = await fetch('http://localhost:3000/iot/subscribe', {
+          const response = await fetch('http://localhost:8184/iot/subscribe', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -128,7 +128,7 @@
           localStorage.setItem('ServerID', data.ServerID);
 
           // ✅ Redirect on success
-          window.location.href = 'http://localhost:3000/dashboard';
+          window.location.href = 'http://localhost:8184/dashboard';
         } catch (error) {
           console.error('❌ ERROR FRONTEND:', error);
           alert('Login failed: ' + error.message);

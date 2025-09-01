@@ -172,11 +172,7 @@ export class IOTService {
               typeof obj === 'object' &&
               obj !== null &&
               'data' in obj &&
-              typeof (
-                obj as {
-                  data: InvoiceNamespace.invoiceData;
-                }
-              ).data === 'object'
+              typeof (obj as { data: object }).data === 'object'
             );
           }
 

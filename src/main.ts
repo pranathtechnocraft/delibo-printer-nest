@@ -11,6 +11,6 @@ async function bootstrap() {
   app.useStaticAssets(join(__dirname,'..', 'public'));
   app.useWebSocketAdapter(new IoAdapter(app));
 
-  await app.listen(3000);
+  await app.listen(8184);
 }
 void bootstrap();
