@@ -8,8 +8,18 @@ import { IoAdapter } from '@nestjs/platform-socket.io';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  app.useStaticAssets(join(__dirname,'..', 'public'));
+  app.useStaticAssets(join(__dirname, '..', 'public'));
   app.useWebSocketAdapter(new IoAdapter(app));
+  app.use(
+    (
+      _,
+      res: { setHeader: (key: string, value: string) => void },
+      next: () => void,
+    ) => {
+      res.setHeader('Cache-Control', 'no-store'); // disable caching
+      next();
+    },
+  );
 
   await app.listen(8184);
 }

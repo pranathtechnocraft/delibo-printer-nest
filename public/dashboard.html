@@ -64,7 +64,28 @@
         opacity: 1 !important;
         animation: none !important;
       }
-
+      .userDetails {
+        text-align: center;
+        margin: 0.5rem;
+      }
+      .test-printer {
+        margin-top: 20px;
+        padding: 10px 20px;
+        background-color: #e7b13c;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      .test-printer:hover {
+        background-color: #c08c2b;
+      }
+      .webSocketDisconnected {
+        text-align: center;
+        color: #c0392b;
+        font-weight: 600;
+      }
       @keyframes slideIn {
         from {
           opacity: 0;
@@ -88,9 +109,15 @@
     <div class="container">
       <h2>Printer Dashboard</h2>
       <p>Real-time connection active.</p>
-      <button class="logout-button" onclick="logout()">Logout</button>
-    </div>
+      <div class="userDetails" id="accountID"></div>
+      <div class="userDetails" id="lastLoginTime"></div>
 
+      <button class="logout-button" onclick="logout()">Logout</button>
+      <button class="test-printer" onclick="testPrinter(this)">
+        Test Printer
+      </button>
+    </div>
+    <div id="webSocketDisconnectedId" class="webSocketDisconnected"></div>
     <div class="toast-container" id="toastContainer"></div>
     <!-- <button onclick="enableAudio()">Enable Notifications</button> -->
     <audio
@@ -128,6 +155,7 @@
             localStorage.removeItem('ServerID');
             window.location.href = '/';
           }
+          await getCustomerDetail();
           connectSocket(frontEndServerID);
         } catch (error) {
           console.error('Error validating server ID:', error);
@@ -161,6 +189,11 @@
 
         socket.on('disconnect', () => {
           console.warn('WebSocket disconnected');
+          const container = document.getElementById('webSocketDisconnectedId');
+          container.innerHTML = `&#9888; Web socket disconnected please
+      <a style="color: #c0392b" href="http://localhost:8184/dashboard"
+        >refresh</a
+      >.`;
         });
 
         socket.on('connect_error', (err) => {
@@ -199,20 +232,29 @@
       }
 
       function showToast(title, message) {
+        console.log('Event message ', message);
+
         const container = document.getElementById('toastContainer');
         const toast = document.createElement('div');
+        let timeOutValue = 10000;
         toast.classList.add('toast');
-        const minimalNotification = createMinimalNotification(
-          JSON.parse(message),
-        );
 
-        toast.innerHTML = `
+        if (typeof message == 'string') {
+          const minimalNotification = createMinimalNotification(
+            JSON.parse(message),
+          );
+          toast.innerHTML = `
         <div>🔔 ${minimalNotification.title}</div></br>
         <div>Order No: ${minimalNotification.orderNo}</div></br>
         <div>Items: ${minimalNotification.message}</div></br>
         <div>Total: ${minimalNotification.total}</div></br>
         <div>Time: ${minimalNotification.time}</div></br>
         `;
+        } else {
+          toast.innerHTML = `<div>Status: ${message.message}</div>`;
+          toast.style.backgroundColor = message.color;
+          timeOutValue = 3000;
+        }
 
         console.log('toast : ', toast);
 
@@ -221,7 +263,7 @@
         // Remove toast after 4 seconds
         setTimeout(() => {
           toast.remove();
-        }, 10000); // Enough for fadeOut to complete
+        }, timeOutValue); // Enough for fadeOut to complete
       }
 
       function playSound() {
@@ -244,6 +286,51 @@
           if (socket) socket.disconnect();
 
           window.location.href = '/';
+        } catch (error) {
+          alert(error);
+        }
+      }
+
+      async function testPrinter(button) {
+        try {
+          button.disabled = true;
+          button.innerText = 'Testing...';
+          const res = await fetch(
+            'http://localhost:8184/connection/testPrinter',
+            {
+              method: 'POST',
+            },
+          );
+          if (!res.ok) {
+            throw new Error('Failed to disconnect the websocket');
+          }
+          const response = await res.json();
+          console.log('user details response : ', response);
+          showToast('', response);
+        } catch (error) {
+          button.disabled = false;
+          button.innerText = 'Test Printer';
+          alert(error);
+        } finally {
+          button.disabled = false;
+          button.innerText = 'Test Printer';
+        }
+      }
+      async function getCustomerDetail() {
+        try {
+          const res = await fetch(
+            'http://localhost:8184/dashboard/userDetails',
+          );
+          if (!res.ok) {
+            throw new Error('Error while the customer account id');
+          }
+          const response = await res.json();
+          console.log('user details response : ', response);
+          document.getElementById('accountID').textContent =
+            `Account Id : ${response.customerAccountId}`;
+
+          document.getElementById('lastLoginTime').textContent =
+            `Logged time : ${response.loginTime}`;
         } catch (error) {
           alert(error);
         }

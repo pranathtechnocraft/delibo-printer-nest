@@ -9,5 +9,6 @@ import { NotificationsModule } from 'src/notification/notifications.module';
   controllers: [IOTController],
   providers: [IOTService],
   imports: [InvoiceModule, ServerIDModule, NotificationsModule],
+  exports: [IOTService],
 })
 export class IOTModule {}

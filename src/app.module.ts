@@ -5,6 +5,7 @@ import { DashBoardModule } from './dashboard/dashboard.module';
 import { ServerIDModule } from './serverId/server-id.module';
 import { NotificationsModule } from './notification/notifications.module';
 import { WebSocketModule } from './websocket/websocket.module';
+import { TestConnectionModule } from './testConnections/test.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { WebSocketModule } from './websocket/websocket.module';
     ServerIDModule,
     NotificationsModule,
     WebSocketModule,
+    TestConnectionModule,
   ],
 })
 export class AppModule {}

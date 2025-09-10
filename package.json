@@ -23,6 +23,15 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
+  "pkg": {
+    "assets": [
+      "dist/**/*",
+      "public/**/*"
+    ],
+    "scripts": [
+      "dist/**/*.js"
+    ]
+  },
   "dependencies": {
     "@aws-sdk/client-cognito-identity": "^3.848.0",
     "@aws-sdk/credential-provider-cognito-identity": "^3.848.0",
@@ -35,7 +44,7 @@
     "aws-sdk": "^2.1692.0",
     "mqtt": "^5.13.3",
     "pdf-to-printer": "^5.6.0",
-    "pdfkit": "^0.17.1",
+    "puppeteer": "^24.18.0",
     "qrcode": "^1.5.4",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",

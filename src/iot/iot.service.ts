@@ -11,7 +11,7 @@ import {
   AuthenticationDetails,
 } from 'amazon-cognito-identity-js';
 import { AWSDETAILS } from 'src/types/aws.details';
-import { InvoiceNamespace } from 'src/namespaces/invoiceNamespace';
+import { InvoiceData } from 'src/namespaces/invoiceNamespace';
 import { InvoiceService } from 'src/invoice/invoice.service';
 import { ServerIDService } from 'src/serverId/server-id.service';
 import { NotificationsService } from 'src/notification/notifications.service';
@@ -19,8 +19,8 @@ import { NotificationsService } from 'src/notification/notifications.service';
 @Injectable()
 export class IOTService {
   private client: MqttClient | null = null;
-  private topicName: string;
-
+  private customerAccountId: string;
+  private loginTime: string;
   constructor(
     private readonly invoiceService: InvoiceService,
     private readonly ServerID: ServerIDService,
@@ -65,8 +65,9 @@ export class IOTService {
               });
             }
             console.log('attributes : ', attributes);
-            this.topicName = attributes.given_name;
+            this.customerAccountId = attributes.given_name;
           });
+          this.setLoginTime();
           resolve(idToken);
         },
         onFailure: (err) => {
@@ -77,6 +78,29 @@ export class IOTService {
         },
       });
     });
+  }
+
+  private setLoginTime(): void {
+    const isoString: string = new Date().toISOString();
+    const formatter = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Kolkata',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+    const parts = formatter.formatToParts(new Date(isoString));
+    const formatted = `${parts.find((p) => p.type === 'day')?.value}-${parts.find((p) => p.type === 'month')?.value}-${parts.find((p) => p.type === 'year')?.value} ${parts.find((p) => p.type === 'hour')?.value}:${parts.find((p) => p.type === 'minute')?.value} ${parts.find((p) => p.type === 'dayPeriod')?.value.toLowerCase()}`;
+    this.loginTime = formatted;
+  }
+
+  getCustomerAccountId(): object {
+    return {
+      customerAccountId: this.customerAccountId ?? 'NOT DEFINED',
+      loginTime: this.loginTime,
+    };
   }
 
   private async getTemporaryCredentials(
@@ -153,7 +177,7 @@ export class IOTService {
 
       this.client.on('connect', () => {
         console.log('✅ Connected to AWS IoT');
-        this.client?.subscribe(`${this.topicName}/topic`, (err) => {
+        this.client?.subscribe(`${this.customerAccountId}/topic`, (err) => {
           if (err) console.error('❌ Subscribe error:', err);
           else console.log('📡 Subscribed to topic');
         });
@@ -165,9 +189,7 @@ export class IOTService {
         let parsed: unknown;
 
         void (async () => {
-          function hasDataProperty(
-            obj: unknown,
-          ): obj is { data: InvoiceNamespace.invoiceData } {
+          function hasDataProperty(obj: unknown): obj is { data: InvoiceData } {
             return (
               typeof obj === 'object' &&
               obj !== null &&
@@ -180,6 +202,10 @@ export class IOTService {
             parsed = JSON.parse(rawMessage);
             if (hasDataProperty(parsed)) {
               await this.invoiceService.printInvoice(parsed.data);
+
+              this.notificationService.sendNewNotification({
+                message: JSON.stringify(parsed.data),
+              });
             }
           } catch (error) {
             console.log('Error : ', error);

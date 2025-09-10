@@ -6,7 +6,7 @@ export class ServerIDController {
   constructor(private readonly ServerID: ServerIDService) {}
 
   @Get('server-id')
-  getServerId() {
+  getServerId(): object {
     return { serverId: this.ServerID.getUUID() };
   }
 }
