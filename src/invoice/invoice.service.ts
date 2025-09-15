@@ -108,6 +108,7 @@ export class InvoiceService {
   <b>Type:</b> Take Away <br>
   <b>Bill No:</b> -- <br>
   <b>Order No:</b> ${order.orderNo} <br>
+  <b>Category:</b> ${kot[0].tcn} <br>
   <b>User:</b> ${order.buyerName} <br>
   <b>Date:</b> ${date} <br>
   <b>KOT No:</b> -- <br>
@@ -130,7 +131,7 @@ export class InvoiceService {
   <table class="summary">
     <tr>
       <td><b>Total Qty</b></td>
-      <td class="qty"><b>${order.totalQuantity}</b></td>
+      <td class="qty"><b>${kot.length}</b></td>
     </tr>
   </table>
   <div class="line"></div>
